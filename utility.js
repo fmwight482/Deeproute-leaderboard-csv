@@ -45,40 +45,6 @@ function hasNonZeroSortValue(tableId, tableRow) {
 	}
 }
 
-// function to parse out league and table info and kick off page loads
-function prepareLeaderboard(url) {
-	//console.log(url);
-	var player_log = [];
-	var league, year, tableId;
-
-	try {
-		// http://deeproute.com/?sel=lgleader&lifetime=&myleagueno=21&year=2115&typer=R&stat=4
-		league = parseInt(getUrlParameter(url, "myleagueno"));
-		year = parseInt(getUrlParameter(url, "year"));
-		tableId = parseInt(getUrlParameter(url, "stat"));
-		if (tableId <= 0 || tableId > 8) {
-			throw "Invalid stat page ID: '" + tableId + "'";
-		}
-	} catch (e) {
-		console.error(e);
-	}
-	console.log("league = '" + league + "'");
-
-	url += addSortParams(tableId);
-
-	console.log("Loading next page...");
-	$.ajax({
-		url: url,
-		type: "GET",
-		success: function(result) {
-			parseLeaderboard(result, player_log, tableId)
-		},
-		error: function(error) {
-			console.log("Error: " + error)
-		}
-	})
-}
-
 // check if the given URL has a valid year parameter
 function urlHasYear(url) {
 	var year;
@@ -112,8 +78,51 @@ function getUrlParameter(sPageURL, sParam) {
 	throw "Parameter '" + sParam + "' not present in URL '" + sPageURL + "'";
 }
 
+// function to parse out league and table info and kick off page loads
+function prepareLeaderboard(url) {
+	//console.log(url);
+	var playerLog = [];
+	var league, year, tableId;
+
+	try {
+		// http://deeproute.com/?sel=lgleader&lifetime=&myleagueno=21&year=2115&typer=R&stat=4
+		league = parseInt(getUrlParameter(url, "myleagueno"));
+		year = parseInt(getUrlParameter(url, "year"));
+		tableId = parseInt(getUrlParameter(url, "stat"));
+		if (tableId <= 0 || tableId > 8) {
+			throw "Invalid stat page ID: '" + tableId + "'";
+		}
+	} catch (e) {
+		console.error(e);
+	}
+	console.log("league = '" + league + "'");
+
+	loadLeaderboard(url, playerLog, tableId, 0);
+	console.log(playerLog);
+}
+
+function loadLeaderboard(url, playerLog, tableId, iteration) {
+	url += addSortParams(tableId);
+	var finalTable;
+
+	console.log("Loading next page...");
+	$.ajax({
+		url: url,
+		type: "GET",
+		async: false,
+		success: function(result) {
+			parseLeaderboard(result, playerLog, tableId)
+		},
+		error: function(error) {
+			console.log("Error: " + error)
+		}
+	})
+
+	//return playerLog;
+}
+
 // helper function to parse leaderboard
-function parseLeaderboard(page, player_log, tableId) {
+function parseLeaderboard(page, playerLog, tableId) {
 	var $page = $(page);
 	var $table = $page.find("table.table-striped tr");
 
@@ -135,6 +144,7 @@ function parseLeaderboard(page, player_log, tableId) {
 		i++;
 	}
 	console.log(finalTable);
+	//return finalTable;
 }
 
 // helper function to download files
