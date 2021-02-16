@@ -1,0 +1,18 @@
+{
+	"name": "Deeproute-leaderboard-csv",
+	"version": "0.1.0",
+	"description": "Download leaderboards in csv form",
+	"manifest_version": 2,
+	"content_scripts": [
+		{
+            "matches": [
+                "http://deeproute.com/?sel=lgleader*"
+            ],
+            "js": [
+                "jquery-3.4.1.min.js",
+                "leaderboard.js",
+                "utility.js"
+            ]
+        }
+	]
+}
