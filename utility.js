@@ -26,6 +26,7 @@ const statColumns = [
 	[21, 22], // blocking
 ];
 
+// This is really hacky. We actually want to pass in the URL, check for existing sort parameters, and then add/modify as appropriate.
 function addSortParams(tableId) {
 	var sortParams = "&stat2=" + statColumns[tableId][0];
 	if (statColumns[tableId][1] != -1) {
@@ -37,7 +38,7 @@ function addSortParams(tableId) {
 
 function hasNonZeroSortValue(tableId, tableRow) {
 	if (tableColumns[tableId][1] !== -1) {
-		return tableRow[tableColumns[tableId][0]] !== "0" && tableRow[tableColumns[tableId][1]] !== "0"
+		return tableRow[tableColumns[tableId][0]] !== "0" || tableRow[tableColumns[tableId][1]] !== "0"
 	}
 	else {
 		return tableRow[tableColumns[tableId][0]] !== "0"
