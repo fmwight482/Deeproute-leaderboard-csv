@@ -68,7 +68,7 @@ function getUrlParameter(sPageURL, sParam) {
 
 		if (sParameterName[0] === sParam) {
 			if (sParameterName[1] !== undefined) {
-				console.log("Parameter '"  + sParam + "' = '" + decodeURIComponent(sParameterName[1]) + "'");
+				//console.log("Parameter '"  + sParam + "' = '" + decodeURIComponent(sParameterName[1]) + "'");
 				return decodeURIComponent(sParameterName[1]);
 			} else {
 				throw "Parameter '" + sParam + "' is undefined in URL '" + sPageURL + "'";
@@ -81,7 +81,7 @@ function getUrlParameter(sPageURL, sParam) {
 // function to parse out league and table info and kick off page loads
 function prepareLeaderboard(url) {
 	//console.log(url);
-	var playerLog = [];
+	var playerLog = new Array();
 	var league, year, tableId;
 
 	try {
@@ -99,6 +99,29 @@ function prepareLeaderboard(url) {
 
 	var tempTable = loadLeaderboard(url, tableId, 0);
 	console.log(tempTable);
+
+	// start at index 1 to skip empty first row
+	for (var i=1; i<tempTable.length; i++) {
+		var rowArray = new Array();
+		// "<a target="onepl" style="font-size:11px;" href="?js=oneplayer&amp;myleagueno=21&amp;lookatplayer=41306">Michael Mallak</a>"
+		var $linkCell = $(tempTable[i][1]);
+		var name = $linkCell.text();
+		var playerId = getUrlParameter($linkCell.attr("href"), "lookatplayer");
+		rowArray.push(name);
+		rowArray.push(playerId);
+		rowArray.push(league);
+		rowArray.push(year);
+		rowArray.push($(tempTable[i][1]).text()); // team abbr
+
+		// start at index 3 to skip columns processed above 
+		for (var j=3; j<tempTable[i].length; j++) {
+			rowArray.push(tempTable[i][j]);
+		}
+
+		playerLog.push(rowArray);
+	}
+
+	console.log(playerLog);
 }
 
 // synchronously load the leaderboard page and call the parsing function
@@ -144,7 +167,6 @@ function parseLeaderboard(page, tableId) {
 		}
 		i++;
 	}
-	//console.log(tempTable);
 	return tempTable;
 }
 
