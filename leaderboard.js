@@ -7,9 +7,7 @@ $(document).ready(function () {
 
 		//attach event handlers
 		$('#download_csv').click(function(){
-		//alert(window.location);
-		prepareLeaderboard(window.location.href);
-		//parse_leaderboard($('table.table.table-striped.table-condensed'), []);
+			prepareLeaderboard(window.location.href);
 		});
 	}
 });
