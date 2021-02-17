@@ -142,7 +142,8 @@ function prepareLeaderboard(url) {
 		loadCount++;
 	}
 
-	console.log(playerLog);
+	//console.log(playerLog);
+	console.log(nestedArrayToCsv(playerLog));
 }
 
 // synchronously load the leaderboard page and call the parsing function
@@ -207,6 +208,14 @@ function getOutputHeaders(inputHeaders) {
 	}
 
 	return outputHeaders;
+}
+
+function nestedArrayToCsv(content) {
+	var csv = content.map(function(row) {
+		return row.valueOf();
+	}).join("\n");
+
+	return csv;
 }
 
 // helper function to download files
