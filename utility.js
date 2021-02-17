@@ -97,28 +97,41 @@ function prepareLeaderboard(url) {
 	}
 	console.log("league = '" + league + "'");
 
-	var tempTable = loadLeaderboard(url, tableId, 0);
-	console.log(tempTable);
+	var loadCount = 0;
+	var loadNext = true;
+	while (loadNext) {
+		var tempTable = loadLeaderboard(url, tableId, loadCount);
+		//console.log(tempTable);
 
-	// start at index 1 to skip empty first row
-	for (var i=1; i<tempTable.length; i++) {
-		var rowArray = new Array();
-		// "<a target="onepl" style="font-size:11px;" href="?js=oneplayer&amp;myleagueno=21&amp;lookatplayer=41306">Michael Mallak</a>"
-		var $linkCell = $(tempTable[i][1]);
-		var name = $linkCell.text();
-		var playerId = getUrlParameter($linkCell.attr("href"), "lookatplayer");
-		rowArray.push(name);
-		rowArray.push(playerId);
-		rowArray.push(league);
-		rowArray.push(year);
-		rowArray.push($(tempTable[i][1]).text()); // team abbr
-
-		// start at index 3 to skip columns processed above 
-		for (var j=3; j<tempTable[i].length; j++) {
-			rowArray.push(tempTable[i][j]);
+		// if there are exactly 250 valid rows (plus one row of filler), there may be more valid players on the next page. 
+		if (tempTable.length !== 251) {
+			loadNext = false;
+			console.log("length = '" + tempTable.length + "', last load");
+		} else {
+			console.log("Not done, should load next page");
 		}
 
-		playerLog.push(rowArray);
+		// start at index 1 to skip empty first row
+		for (var i=1; i<tempTable.length; i++) {
+			var rowArray = new Array();
+			// "<a target="onepl" style="font-size:11px;" href="?js=oneplayer&amp;myleagueno=21&amp;lookatplayer=41306">Michael Mallak</a>"
+			var $linkCell = $(tempTable[i][1]);
+			var name = $linkCell.text();
+			var playerId = getUrlParameter($linkCell.attr("href"), "lookatplayer");
+			rowArray.push(name);
+			rowArray.push(playerId);
+			rowArray.push(league);
+			rowArray.push(year);
+			rowArray.push($(tempTable[i][1]).text()); // team abbr
+
+			// start at index 3 to skip columns processed above 
+			for (var j=3; j<tempTable[i].length; j++) {
+				rowArray.push(tempTable[i][j]);
+			}
+
+			playerLog.push(rowArray);
+		}
+		loadCount++;
 	}
 
 	console.log(playerLog);
@@ -127,6 +140,7 @@ function prepareLeaderboard(url) {
 // synchronously load the leaderboard page and call the parsing function
 function loadLeaderboard(url, tableId, iteration) {
 	url += addSortParams(tableId);
+	url += "&onpage=" + iteration;
 	var tempTable;
 
 	console.log("Loading next page...");
