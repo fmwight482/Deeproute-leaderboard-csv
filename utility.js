@@ -10,7 +10,7 @@ const tableColumns = [
 	[6, 9], // kicking
 	[5, -1], // punting
 	[6, 10], // returns
-	[6, 7], // blocking
+	[6, 7] // blocking
 ];
 
 // array of the GET request stat IDs the table should be sorted on, used in loading a sorted table
@@ -23,8 +23,20 @@ const statColumns = [
 	[132, 112], // kicking
 	[91, -1], // punting
 	[151, 161], // returns
-	[21, 22], // blocking
+	[21, 22] // blocking
 ];
+
+const leaderboardNames = [
+	"", // filler
+	"passing",
+	"rushing",
+	"recieving",
+	"defense",
+	"kicking",
+	"punting",
+	"returns",
+	"blocking"
+]
 
 // This is really hacky. We actually want to pass in the URL, check for existing sort parameters, and then add/modify as appropriate.
 function addSortParams(tableId) {
@@ -143,7 +155,9 @@ function prepareLeaderboard(url) {
 	}
 
 	//console.log(playerLog);
-	console.log(nestedArrayToCsv(playerLog));
+	//console.log(nestedArrayToCsv(playerLog));
+	var filename = "lg" + league + "_" + year + "_" + leaderboardNames[tableId] + "leaders.csv";
+	download(nestedArrayToCsv(playerLog), filename, "text.csv");
 }
 
 // synchronously load the leaderboard page and call the parsing function
