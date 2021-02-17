@@ -97,13 +97,14 @@ function prepareLeaderboard(url) {
 	}
 	console.log("league = '" + league + "'");
 
-	loadLeaderboard(url, playerLog, tableId, 0);
-	console.log(playerLog);
+	var tempTable = loadLeaderboard(url, tableId, 0);
+	console.log(tempTable);
 }
 
-function loadLeaderboard(url, playerLog, tableId, iteration) {
+// synchronously load the leaderboard page and call the parsing function
+function loadLeaderboard(url, tableId, iteration) {
 	url += addSortParams(tableId);
-	var finalTable;
+	var tempTable;
 
 	console.log("Loading next page...");
 	$.ajax({
@@ -111,18 +112,18 @@ function loadLeaderboard(url, playerLog, tableId, iteration) {
 		type: "GET",
 		async: false,
 		success: function(result) {
-			parseLeaderboard(result, playerLog, tableId)
+			tempTable = parseLeaderboard(result, tableId)
 		},
 		error: function(error) {
 			console.log("Error: " + error)
 		}
 	})
 
-	//return playerLog;
+	return tempTable;
 }
 
 // helper function to parse leaderboard
-function parseLeaderboard(page, playerLog, tableId) {
+function parseLeaderboard(page, tableId) {
 	var $page = $(page);
 	var $table = $page.find("table.table-striped tr");
 
@@ -132,19 +133,19 @@ function parseLeaderboard(page, playerLog, tableId) {
 		});
 	});
 	// console.log(tbl);
-	var finalTable = new Array();
+	var tempTable = new Array();
 	var i = 0;
 	var foundEmpty = false;
 	while (i<tbl.length && !foundEmpty) {
 		if (hasNonZeroSortValue(tableId, tbl[i])) {
-			finalTable.push(tbl[i]);
+			tempTable.push(tbl[i]);
 		} else {
 			foundEmpty = true;
 		}
 		i++;
 	}
-	console.log(finalTable);
-	//return finalTable;
+	//console.log(tempTable);
+	return tempTable;
 }
 
 // helper function to download files
