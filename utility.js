@@ -36,6 +36,7 @@ function addSortParams(tableId) {
 	return sortParams;
 }
 
+// helper function to check if a given table row, from a table of the given type, contains a player with relevant playing time. 
 function hasNonZeroSortValue(tableId, tableRow) {
 	if (tableColumns[tableId][1] !== -1) {
 		return tableRow[tableColumns[tableId][0]] !== "0" || tableRow[tableColumns[tableId][1]] !== "0"
@@ -58,6 +59,7 @@ function urlHasYear(url) {
 	return true;
 }
 
+// helper function to pull parameter values from a URL
 function getUrlParameter(sPageURL, sParam) {
 	var sURLVariables = sPageURL.split('&');
 	var sParameterName;
@@ -78,7 +80,7 @@ function getUrlParameter(sPageURL, sParam) {
 	throw "Parameter '" + sParam + "' not present in URL '" + sPageURL + "'";
 }
 
-// function to parse out league and table info and kick off page loads
+// main function to parse out league and table info and kick off page loads
 function prepareLeaderboard(url) {
 	//console.log(url);
 	var playerLog = new Array();
@@ -96,6 +98,12 @@ function prepareLeaderboard(url) {
 		console.error(e);
 	}
 	console.log("league = '" + league + "'");
+
+	// get the table column headers for the CSV 
+	var inputHeaders = $("table.table-striped th").get().map(function(cell) {
+		return $(cell).text();
+	})
+	playerLog.push(getOutputHeaders(inputHeaders));
 
 	var loadCount = 0;
 	var loadNext = true;
@@ -122,7 +130,7 @@ function prepareLeaderboard(url) {
 			rowArray.push(playerId);
 			rowArray.push(league);
 			rowArray.push(year);
-			rowArray.push($(tempTable[i][1]).text()); // team abbr
+			rowArray.push($(tempTable[i][2]).text()); // team abbr
 
 			// start at index 3 to skip columns processed above 
 			for (var j=3; j<tempTable[i].length; j++) {
@@ -139,6 +147,7 @@ function prepareLeaderboard(url) {
 
 // synchronously load the leaderboard page and call the parsing function
 function loadLeaderboard(url, tableId, iteration) {
+	// hacktacular URL modifications that break on nonstandard input. Yaaaaaay...
 	url += addSortParams(tableId);
 	url += "&onpage=" + iteration;
 	var tempTable;
@@ -182,6 +191,22 @@ function parseLeaderboard(page, tableId) {
 		i++;
 	}
 	return tempTable;
+}
+
+// helper function to create an array of appropriate table headers for the CSV 
+function getOutputHeaders(inputHeaders) {
+	var outputHeaders = new Array();
+	outputHeaders.push("Name");
+	outputHeaders.push("ID");
+	outputHeaders.push("League");
+	outputHeaders.push("Year");
+
+	// start at index 2 to skip over Rank (not wanted) and Name (already handled)
+	for (var i=2; i<inputHeaders.length; i++) {
+		outputHeaders.push(inputHeaders[i]);
+	}
+
+	return outputHeaders;
 }
 
 // helper function to download files
