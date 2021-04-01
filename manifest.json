@@ -6,7 +6,7 @@
 	"content_scripts": [
 		{
             "matches": [
-                "http://deeproute.com/?sel=lgleader*"
+                "http://deeproute.com/*?sel=lgleader&*"
             ],
             "js": [
                 "jquery-3.4.1.min.js",

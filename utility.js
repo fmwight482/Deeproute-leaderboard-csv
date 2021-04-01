@@ -1,5 +1,5 @@
 // array of the "required" columns for each table, indexed by the table ID. 
-// these are the table-lever indexes for columns which loaded tables should be sorted by, and which 
+// these are the table-level indexes for columns which loaded tables should be sorted by, and which 
 // players must have a nonzero value in at least one to be included in the CSV.
 const tableColumns = [
 	[], // filler
@@ -11,6 +11,19 @@ const tableColumns = [
 	[5, -1], // punting
 	[6, 10], // returns
 	[6, 7] // blocking
+];
+
+// same as above, but for the all time leaders table. Double check these values, only 
+const careerTableColumns = [
+	[], // filler
+	[5, -1], // passing
+	[5, -1], // rushing
+	[6, -1], // recieving
+	[5, 6], // defense
+	[5, 8], // kicking
+	[4, -1], // punting
+	[5, 9], // returns
+	[5, 6] // blocking
 ];
 
 // array of the GET request stat IDs the table should be sorted on, used in loading a sorted table
@@ -36,7 +49,7 @@ const leaderboardNames = [
 	"punting",
 	"returns",
 	"blocking"
-]
+];
 
 // This is really hacky. We actually want to pass in the URL, check for existing sort parameters, and then add/modify as appropriate.
 function addSortParams(tableId) {
@@ -55,6 +68,16 @@ function hasNonZeroSortValue(tableId, tableRow) {
 	}
 	else {
 		return tableRow[tableColumns[tableId][0]] !== "0"
+	}
+}
+
+// hacky substitute for above to download All Time Leaders table
+function hasNonZeroSortValueCareer(tableId, tableRow) {
+	if (careerTableColumns[tableId][1] !== -1) {
+		return tableRow[careerTableColumns[tableId][0]] !== "0" || tableRow[careerTableColumns[tableId][1]] !== "0"
+	}
+	else {
+		return tableRow[careerTableColumns[tableId][0]] !== "0"
 	}
 }
 
@@ -121,6 +144,7 @@ function prepareLeaderboard(url) {
 	var loadNext = true;
 	while (loadNext) {
 		var tempTable = loadLeaderboard(url, tableId, loadCount);
+		console.log("loaded page " + loadCount);
 		//console.log(tempTable);
 
 		// if there are exactly 250 valid rows (plus one row of filler), there may be more valid players on the next page. 
@@ -128,7 +152,7 @@ function prepareLeaderboard(url) {
 			loadNext = false;
 			console.log("length = '" + tempTable.length + "', last load");
 		} else {
-			console.log("Not done, should load next page");
+			//console.log("Not done, should load next page");
 		}
 
 		// start at index 1 to skip empty first row
@@ -148,6 +172,11 @@ function prepareLeaderboard(url) {
 			for (var j=3; j<tempTable[i].length; j++) {
 				rowArray.push(tempTable[i][j]);
 			}
+
+			// hacky replacement for above, no team abbr in the All Time Leaders table so we start at index 2
+			// for (var j=2; j<tempTable[i].length; j++) {
+			// 	rowArray.push(tempTable[i][j]);
+			// }
 
 			playerLog.push(rowArray);
 		}
