@@ -62,12 +62,21 @@ function addSortParams(tableId) {
 }
 
 // helper function to check if a given table row, from a table of the given type, contains a player with relevant playing time. 
-function hasNonZeroSortValue(tableId, tableRow) {
-	if (tableColumns[tableId][1] !== -1) {
-		return tableRow[tableColumns[tableId][0]] !== "0" || tableRow[tableColumns[tableId][1]] !== "0"
-	}
-	else {
-		return tableRow[tableColumns[tableId][0]] !== "0"
+function hasNonZeroSortValue(tableId, tableRow, isAllTimeLeaders) {
+	if (isAllTimeLeaders) {
+		if (careerTableColumns[tableId][1] !== -1) {
+			return tableRow[careerTableColumns[tableId][0]] !== "0" || tableRow[careerTableColumns[tableId][1]] !== "0"
+		}
+		else {
+			return tableRow[careerTableColumns[tableId][0]] !== "0"
+		}
+	} else {
+		if (tableColumns[tableId][1] !== -1) {
+			return tableRow[tableColumns[tableId][0]] !== "0" || tableRow[tableColumns[tableId][1]] !== "0"
+		}
+		else {
+			return tableRow[tableColumns[tableId][0]] !== "0"
+		}
 	}
 }
 
@@ -119,13 +128,21 @@ function getUrlParameter(sPageURL, sParam) {
 function prepareLeaderboard(url) {
 	//console.log(url);
 	var playerLog = new Array();
-	var league, year, tableId;
+	var league, year, tableId, lifetime;
+	var isAllTimeLeaders = false;
 
 	try {
 		// http://deeproute.com/?sel=lgleader&lifetime=&myleagueno=21&year=2115&typer=R&stat=4
 		league = parseInt(getUrlParameter(url, "myleagueno"));
 		year = parseInt(getUrlParameter(url, "year"));
 		tableId = parseInt(getUrlParameter(url, "stat"));
+		lifetime = getUrlParameter(url, "lifetime");
+		//console.log("lifetime = '" + lifetime + "'");
+		if (lifetime == "Y") {
+			isAllTimeLeaders = true;
+			console.log("All time leaders!");
+		}
+
 		if (tableId <= 0 || tableId > 8) {
 			throw "Invalid stat page ID: '" + tableId + "'";
 		}
@@ -143,7 +160,7 @@ function prepareLeaderboard(url) {
 	var loadCount = 0;
 	var loadNext = true;
 	while (loadNext) {
-		var tempTable = loadLeaderboard(url, tableId, loadCount);
+		var tempTable = loadLeaderboard(url, tableId, loadCount, isAllTimeLeaders);
 		console.log("loaded page " + loadCount);
 		//console.log(tempTable);
 
@@ -166,17 +183,19 @@ function prepareLeaderboard(url) {
 			rowArray.push(playerId);
 			rowArray.push(league);
 			rowArray.push(year);
-			rowArray.push($(tempTable[i][2]).text()); // team abbr
+			if (!isAllTimeLeaders) {
+				rowArray.push($(tempTable[i][2]).text()); // team abbr
 
-			// start at index 3 to skip columns processed above 
-			for (var j=3; j<tempTable[i].length; j++) {
-				rowArray.push(tempTable[i][j]);
+				// start at index 3 to skip columns processed above 
+				for (var j=3; j<tempTable[i].length; j++) {
+					rowArray.push(tempTable[i][j]);
+				}
+			} else {
+				// no team abbr in the All Time Leaders table so we start at index 2
+				for (var j=2; j<tempTable[i].length; j++) {
+					rowArray.push(tempTable[i][j]);
+				}
 			}
-
-			// hacky replacement for above, no team abbr in the All Time Leaders table so we start at index 2
-			// for (var j=2; j<tempTable[i].length; j++) {
-			// 	rowArray.push(tempTable[i][j]);
-			// }
 
 			playerLog.push(rowArray);
 		}
@@ -185,12 +204,12 @@ function prepareLeaderboard(url) {
 
 	//console.log(playerLog);
 	//console.log(nestedArrayToCsv(playerLog));
-	var filename = "lg" + league + "_" + year + "_" + leaderboardNames[tableId] + "leaders.csv";
+	var filename = "lg" + league + "_" + year + "_" + leaderboardNames[tableId] + (isAllTimeLeaders ? "_career" : "_") + "leaders.csv";
 	download(nestedArrayToCsv(playerLog), filename, "text.csv");
 }
 
 // synchronously load the leaderboard page and call the parsing function
-function loadLeaderboard(url, tableId, iteration) {
+function loadLeaderboard(url, tableId, iteration, isAllTimeLeaders) {
 	// hacktacular URL modifications that break on nonstandard input. Yaaaaaay...
 	url += addSortParams(tableId);
 	url += "&onpage=" + iteration;
@@ -202,7 +221,7 @@ function loadLeaderboard(url, tableId, iteration) {
 		type: "GET",
 		async: false,
 		success: function(result) {
-			tempTable = parseLeaderboard(result, tableId)
+			tempTable = parseLeaderboard(result, tableId, isAllTimeLeaders)
 		},
 		error: function(error) {
 			console.log("Error: " + error)
@@ -213,7 +232,7 @@ function loadLeaderboard(url, tableId, iteration) {
 }
 
 // helper function to parse leaderboard
-function parseLeaderboard(page, tableId) {
+function parseLeaderboard(page, tableId, isAllTimeLeaders) {
 	var $page = $(page);
 	var $table = $page.find("table.table-striped tr");
 
@@ -227,7 +246,7 @@ function parseLeaderboard(page, tableId) {
 	var i = 0;
 	var foundEmpty = false;
 	while (i<tbl.length && !foundEmpty) {
-		if (hasNonZeroSortValue(tableId, tbl[i])) {
+		if (hasNonZeroSortValue(tableId, tbl[i], isAllTimeLeaders)) {
 			tempTable.push(tbl[i]);
 		} else {
 			foundEmpty = true;
