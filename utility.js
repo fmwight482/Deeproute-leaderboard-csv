@@ -1,3 +1,13 @@
+// stat IDs for the "primary" and "secondary" sort columns for each table
+
+let defRunPlaysId = 23;
+let defPassPlaysId = 24;
+let fieldGoalAttemptsId = 112;
+let extraPointAttempsId = 132;
+let kickReturnsId = 151;
+let puntReturnsId = 161;
+
+
 // array of the "required" columns for each table, indexed by the table ID. 
 // these are the table-level indexes for columns which loaded tables should be sorted by, and which 
 // players must have a nonzero value in at least one to be included in the CSV.
@@ -39,6 +49,18 @@ const statColumns = [
 	[21, 22] // blocking
 ];
 
+const statNames = [
+	[], // filler
+	["ATT", -1], // passing
+	["ATT", -1], // rushing
+	["TGT", -1], // recieving
+	["DRP", "DPP"], // defense
+	["XPA", "FGA"], // kicking
+	["ATT", -1], // punting
+	["KRET", "PREC"], // returns
+	["ORP", "OPP"] // blocking
+];
+
 const leaderboardNames = [
 	"", // filler
 	"passing",
@@ -52,10 +74,12 @@ const leaderboardNames = [
 ];
 
 // This is really hacky. We actually want to pass in the URL, check for existing sort parameters, and then add/modify as appropriate.
-function addSortParams(tableId) {
-	var sortParams = "&stat2=" + statColumns[tableId][0];
-	if (statColumns[tableId][1] != -1) {
-		sortParams += "&stat3=" + statColumns[tableId][1];
+function addSortParams(tableId, sortId) {
+	var sortParams;
+	if (tableId <= 3 || tableId == 6) {
+		sortParams = "&stat2=" + statColumns[tableId][0];
+	} else {
+		sortParams = "&stat2=" + sortId;
 	}
 	console.log("sort params: '" + sortParams + "'");
 	return sortParams;
@@ -124,8 +148,22 @@ function getUrlParameter(sPageURL, sParam) {
 	throw "Parameter '" + sParam + "' not present in URL '" + sPageURL + "'";
 }
 
+function addRadioButtons(leaderboardId, $radio_span) {
+	if (leaderboardId <= 3 | leaderboardId == 6) {
+		$radio_span.append('Sorted by ' + statNames[leaderboardId][0]);
+	} else {
+		$radio_span.append('Sorted by:');
+		$radio_span.append("<br/>");
+		$radio_span.append('<input type="radio" name="leaderboard_sort" value="' + statColumns[leaderboardId][0] + '" checked>');
+		$radio_span.append('<label for="leaderboard_sort"> ' + statNames[leaderboardId][0] + '</label>');
+		$radio_span.append("<br/>");
+		$radio_span.append('<input type="radio" name="leaderboard_sort" value="' + statColumns[leaderboardId][1] + '">');
+		$radio_span.append('<label for="leaderboard_sort"> ' + statNames[leaderboardId][1] + '</label>');
+	}
+} 
+
 // main function to parse out league and table info and kick off page loads
-function prepareLeaderboard(url) {
+function prepareLeaderboard(url, sortId) {
 	//console.log(url);
 	var playerLog = new Array();
 	var league, year, tableId, lifetime;
@@ -160,7 +198,7 @@ function prepareLeaderboard(url) {
 	var loadCount = 0;
 	var loadNext = true;
 	while (loadNext) {
-		var tempTable = loadLeaderboard(url, tableId, loadCount, isAllTimeLeaders);
+		var tempTable = loadLeaderboard(url, tableId, sortId, loadCount, isAllTimeLeaders);
 		console.log("loaded page " + loadCount);
 		//console.log(tempTable);
 
@@ -209,13 +247,14 @@ function prepareLeaderboard(url) {
 }
 
 // synchronously load the leaderboard page and call the parsing function
-function loadLeaderboard(url, tableId, iteration, isAllTimeLeaders) {
+function loadLeaderboard(url, tableId, sortId, iteration, isAllTimeLeaders) {
 	// hacktacular URL modifications that break on nonstandard input. Yaaaaaay...
-	url += addSortParams(tableId);
+	url += addSortParams(tableId, sortId);
 	url += "&onpage=" + iteration;
 	var tempTable;
 
 	console.log("Loading next page...");
+	//console.log(url);
 	$.ajax({
 		url: url,
 		type: "GET",

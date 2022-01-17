@@ -12,6 +12,9 @@
                 "jquery-3.4.1.min.js",
                 "leaderboard.js",
                 "utility.js"
+            ],
+            "css":[
+            	"leaderboard.css"
             ]
         }
 	]
