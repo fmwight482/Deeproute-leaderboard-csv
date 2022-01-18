@@ -1,0 +1,27 @@
+#csv_download_panel {
+	background-color: lightgrey;
+	display: inline-block;
+	margin-bottom: 5px;
+	border-radius: 4px;
+}
+
+#csv_download_panel > span > label {
+	display: inline;
+	margin-bottom: 0px;
+	font-size: 10pt;
+}
+
+#csv_sort_selector {
+	/*background-color: pink;*/
+	font-weight: bold;
+}
+
+#csv_sort_selector > input {
+	/*padding-bottom: 5px;*/
+	margin-top: 0px;
+}
+
+#csv_sort_selector > label {
+	vertical-align: middle;
+}
+
