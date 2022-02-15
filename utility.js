@@ -13,52 +13,52 @@ let puntReturnsId = 161;
 // players must have a nonzero value in at least one to be included in the CSV.
 const tableColumns = [
 	[], // filler
-	[6, -1], // passing
+	[6, 15], // passing
 	[6, -1], // rushing
 	[7, -1], // recieving
-	[6, 7], // defense
-	[6, 9], // kicking
+	[7, 6], // defense
+	[9, 6], // kicking
 	[5, -1], // punting
 	[6, 10], // returns
-	[6, 7] // blocking
+	[7, 6] // blocking
 ];
 
 // same as above, but for the all time leaders table. Double check these values, only 
 const careerTableColumns = [
 	[], // filler
-	[5, -1], // passing
+	[5, 14], // passing
 	[5, -1], // rushing
 	[6, -1], // recieving
-	[5, 6], // defense
-	[5, 8], // kicking
+	[6, 5], // defense
+	[8, 5], // kicking
 	[4, -1], // punting
 	[5, 9], // returns
-	[5, 6] // blocking
+	[6, 5] // blocking
 ];
 
 // array of the GET request stat IDs the table should be sorted on, used in loading a sorted table
 const statColumns = [
 	[], // filler
-	[51, -1], // passing
+	[51, 57], // passing
 	[10, -1], // rushing
 	[40, -1], // recieving
-	[23, 24], // defense
-	[132, 112], // kicking
+	[24, 23], // defense
+	[112, 132], // kicking
 	[91, -1], // punting
 	[151, 161], // returns
-	[21, 22] // blocking
+	[22, 21] // blocking
 ];
 
 const statNames = [
 	[], // filler
-	["ATT", -1], // passing
+	["ATT", "SCK"], // passing
 	["ATT", -1], // rushing
 	["TGT", -1], // recieving
-	["DRP", "DPP"], // defense
-	["XPA", "FGA"], // kicking
+	["DPP", "DRP"], // defense
+	["FGA", "XPA"], // kicking
 	["ATT", -1], // punting
 	["KRET", "PREC"], // returns
-	["ORP", "OPP"] // blocking
+	["OPP", "ORP"] // blocking
 ];
 
 const leaderboardNames = [
@@ -87,19 +87,23 @@ function addSortParams(tableId, sortId) {
 
 // helper function to check if a given table row, from a table of the given type, contains a player with relevant playing time. 
 function hasNonZeroSortValue(tableId, tableRow, isAllTimeLeaders) {
+	// check for a nonzero value for "games", the only valid default sort param
+	return tableRow[3] !== "0";
+}
+
+// filter out leaderboard rows with zero values in all required stats
+function leaderboardFilter(e, tableId, isAllTimeLeaders) {
 	if (isAllTimeLeaders) {
-		if (careerTableColumns[tableId][1] !== -1) {
-			return tableRow[careerTableColumns[tableId][0]] !== "0" || tableRow[careerTableColumns[tableId][1]] !== "0"
-		}
-		else {
-			return tableRow[careerTableColumns[tableId][0]] !== "0"
+		if (e[careerTableColumns[tableId][0]] !== "0") {
+			return true;
+		} else {
+			return careerTableColumns[tableId][1] !== -1 && e[careerTableColumns[tableId][1]] !== "0";
 		}
 	} else {
-		if (tableColumns[tableId][1] !== -1) {
-			return tableRow[tableColumns[tableId][0]] !== "0" || tableRow[tableColumns[tableId][1]] !== "0"
-		}
-		else {
-			return tableRow[tableColumns[tableId][0]] !== "0"
+		if (e[tableColumns[tableId][0]] !== "0") {
+			return true;
+		} else {
+			return tableColumns[tableId][1] !== -1 && e[tableColumns[tableId][1]] !== "0";
 		}
 	}
 }
@@ -149,17 +153,24 @@ function getUrlParameter(sPageURL, sParam) {
 }
 
 function addRadioButtons(leaderboardId, $radio_span) {
-	if (leaderboardId <= 3 | leaderboardId == 6) {
-		$radio_span.append('Sorted by ' + statNames[leaderboardId][0]);
-	} else {
-		$radio_span.append('Sorted by:');
-		$radio_span.append("<br/>");
-		$radio_span.append('<input type="radio" name="leaderboard_sort" value="' + statColumns[leaderboardId][0] + '" checked>');
-		$radio_span.append('<label for="leaderboard_sort"> ' + statNames[leaderboardId][0] + '</label>');
-		$radio_span.append("<br/>");
-		$radio_span.append('<input type="radio" name="leaderboard_sort" value="' + statColumns[leaderboardId][1] + '">');
-		$radio_span.append('<label for="leaderboard_sort"> ' + statNames[leaderboardId][1] + '</label>');
+	$radio_span.attr("data-sortid", statColumns[leaderboardId][0]);
+	$radio_span.append('Sorted by ' + statNames[leaderboardId][0]);
+	if (statNames[leaderboardId][1] != -1) {
+		$radio_span.append(', ' + statNames[leaderboardId][1]);
 	}
+
+	// if (leaderboardId <= 3 | leaderboardId == 6) {
+	// 	$radio_span.attr("data-sortid", statColumns[leaderboardId][0]);
+	// 	$radio_span.append('Sorted by ' + statNames[leaderboardId][0]);
+	// } else {
+	// 	$radio_span.append('Sorted by:');
+	// 	$radio_span.append("<br/>");
+	// 	$radio_span.append('<input type="radio" name="leaderboard_sort" value="' + statColumns[leaderboardId][0] + '" checked>');
+	// 	$radio_span.append('<label for="leaderboard_sort"> ' + statNames[leaderboardId][0] + '</label>');
+	// 	$radio_span.append("<br/>");
+	// 	$radio_span.append('<input type="radio" name="leaderboard_sort" value="' + statColumns[leaderboardId][1] + '">');
+	// 	$radio_span.append('<label for="leaderboard_sort"> ' + statNames[leaderboardId][1] + '</label>');
+	// }
 } 
 
 // main function to parse out league and table info and kick off page loads
@@ -189,12 +200,6 @@ function prepareLeaderboard(url, sortId) {
 	}
 	console.log("league = '" + league + "'");
 
-	// get the table column headers for the CSV 
-	var inputHeaders = $("table.table-striped th").get().map(function(cell) {
-		return $(cell).text();
-	})
-	playerLog.push(getOutputHeaders(inputHeaders));
-
 	var loadCount = 0;
 	var loadNext = true;
 	while (loadNext) {
@@ -202,8 +207,8 @@ function prepareLeaderboard(url, sortId) {
 		console.log("loaded page " + loadCount);
 		//console.log(tempTable);
 
-		// if there are exactly 250 valid rows (plus one row of filler), there may be more valid players on the next page. 
-		if (tempTable.length !== 251) {
+		// if there are exactly 500 valid rows (plus one row of filler), there may be more valid players on the next page. 
+		if (tempTable.length !== 501) {
 			loadNext = false;
 			console.log("length = '" + tempTable.length + "', last load");
 		} else {
@@ -212,33 +217,66 @@ function prepareLeaderboard(url, sortId) {
 
 		// start at index 1 to skip empty first row
 		for (var i=1; i<tempTable.length; i++) {
-			var rowArray = new Array();
-			// "<a target="onepl" style="font-size:11px;" href="?js=oneplayer&amp;myleagueno=21&amp;lookatplayer=41306">Michael Mallak</a>"
-			var $linkCell = $(tempTable[i][1]);
-			var name = $linkCell.text();
-			var playerId = getUrlParameter($linkCell.attr("href"), "lookatplayer");
-			rowArray.push(name);
-			rowArray.push(playerId);
-			rowArray.push(league);
-			rowArray.push(year);
-			if (!isAllTimeLeaders) {
-				rowArray.push($(tempTable[i][2]).text()); // team abbr
+			if (leaderboardFilter(tempTable[i], tableId, isAllTimeLeaders)) {
+				var rowArray = new Array();
+				// "<a target="onepl" style="font-size:11px;" href="?js=oneplayer&amp;myleagueno=21&amp;lookatplayer=41306">Michael Mallak</a>"
+				var $linkCell = $(tempTable[i][1]);
+				var name = $linkCell.text();
+				var playerId = getUrlParameter($linkCell.attr("href"), "lookatplayer");
+				rowArray.push(name);
+				rowArray.push(playerId);
+				rowArray.push(league);
+				rowArray.push(year);
+				if (!isAllTimeLeaders) {
+					rowArray.push($(tempTable[i][2]).text()); // team abbr
 
-				// start at index 3 to skip columns processed above 
-				for (var j=3; j<tempTable[i].length; j++) {
-					rowArray.push(tempTable[i][j]);
+					// start at index 3 to skip columns processed above 
+					for (var j=3; j<tempTable[i].length; j++) {
+						rowArray.push(tempTable[i][j]);
+					}
+				} else {
+					// no team abbr in the All Time Leaders table so we start at index 2
+					for (var j=2; j<tempTable[i].length; j++) {
+						rowArray.push(tempTable[i][j]);
+					}
 				}
-			} else {
-				// no team abbr in the All Time Leaders table so we start at index 2
-				for (var j=2; j<tempTable[i].length; j++) {
-					rowArray.push(tempTable[i][j]);
-				}
+
+				playerLog.push(rowArray);
 			}
-
-			playerLog.push(rowArray);
 		}
 		loadCount++;
 	}
+
+	// sort the array of players by the correct values
+	playerLog = playerLog.sort((a, b) => {
+		if (isAllTimeLeaders) {
+			if (a[careerTableColumns[tableId][0]+2] === b[careerTableColumns[tableId][0]+2]) {
+				if (careerTableColumns[tableId][1] !== -1 && a[careerTableColumns[tableId][1]+2] !== b[careerTableColumns[tableId][1]]+2) {
+					return parseInt(a[careerTableColumns[tableId][1]+2]) < parseInt(b[careerTableColumns[tableId][1]+2]) ? 1 : -1;
+				} else {
+					return 0;
+				}
+			} else {
+				return parseInt(a[careerTableColumns[tableId][0]+2]) < parseInt(b[careerTableColumns[tableId][0]+2]) ? 1 : -1;
+			}
+		} else {
+			if (a[tableColumns[tableId][0]+2] === b[tableColumns[tableId][0]+2]) {
+				if (tableColumns[tableId][1] !== -1 && a[tableColumns[tableId][1]+2] !== b[tableColumns[tableId][1]+2]) {
+					return parseInt(a[tableColumns[tableId][1]+2]) < parseInt(b[tableColumns[tableId][1]+2]) ? 1 : -1;
+				} else {
+					return 0;
+				}
+			} else {
+				return parseInt(a[tableColumns[tableId][0]+2]) < parseInt(b[tableColumns[tableId][0]+2]) ? 1 : -1;
+			}
+		}
+	});
+
+	// get the table column headers for the CSV 
+	var inputHeaders = $("table.table-striped th").get().map(function(cell) {
+		return $(cell).text();
+	})
+	playerLog.unshift(getOutputHeaders(inputHeaders));
 
 	//console.log(playerLog);
 	//console.log(nestedArrayToCsv(playerLog));
@@ -280,7 +318,7 @@ function parseLeaderboard(page, tableId, isAllTimeLeaders) {
 			return $(cell).html();
 		});
 	});
-	// console.log(tbl);
+	//console.log(tbl);
 	var tempTable = new Array();
 	var i = 0;
 	var foundEmpty = false;
@@ -304,7 +342,7 @@ function getOutputHeaders(inputHeaders) {
 	outputHeaders.push("Year");
 
 	// start at index 2 to skip over Rank (not wanted) and Name (already handled)
-	for (var i=2; i<inputHeaders.length; i++) {
+	for (var i=1; i<inputHeaders.length; i++) {
 		outputHeaders.push(inputHeaders[i]);
 	}
 

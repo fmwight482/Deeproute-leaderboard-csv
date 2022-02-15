@@ -8,12 +8,12 @@
 #csv_download_panel > span > label {
 	display: inline;
 	margin-bottom: 0px;
-	font-size: 10pt;
 }
 
 #csv_sort_selector {
 	/*background-color: pink;*/
 	font-weight: bold;
+	font-size: 9px;
 }
 
 #csv_sort_selector > input {

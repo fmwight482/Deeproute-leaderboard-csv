@@ -17,7 +17,12 @@ $(document).ready(function () {
 
 		//attach event handlers
 		$('#download_csv').click(function(){
-			let sortId = $('input[name="leaderboard_sort"]:checked').val();
+			let sortId;
+			if (leaderboardId <= 3 | leaderboardId == 6) {
+				sortId = $radio_span.attr("data-sortid");
+			} else {
+				sortId = $('input[name="leaderboard_sort"]:checked').val();
+			}
 			console.log("sortId = " + sortId);
 			prepareLeaderboard(window.location.href, sortId);
 		});
